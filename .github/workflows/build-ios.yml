@@ -1,0 +1,20 @@
+# PlanetPort: builds an unsigned PlanetPort.ipa on a GitHub-hosted Mac (no Mac needed).
+# Works with the normal repository layout, or with the whole project uploaded from a browser
+# as a single PlanetPort-src.zip in the repository root. Install the IPA with Sideloadly.
+
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-ios
+  cancel-in-progress: true
+
+jobs:
+ 
