@@ -17,4 +17,56 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
- 
+  build:
+    runs-on: macos-15
+    timeout-minutes: 300
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Locate sources
+        run: |
+          if [ -f PlanetPort-src.zip ]; then
+            rm -rf src
+            mkdir src
+            unzip -q PlanetPort-src.zip -d src
+            echo "SRC=$GITHUB_WORKSPACE/src" >> "$GITHUB_ENV"
+          else
+            echo "SRC=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          fi
+
+      - name: Restore compiler cache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ccache-ios-${{ github.run_id }}
+          restore-keys: ccache-ios-
+
+      - name: Build PlanetPort.ipa
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+        run: bash "$SRC/scripts/ci_build.sh" "$GITHUB_WORKSPACE/PlanetPort.ipa"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlanetPort-ipa
+          path: PlanetPort.ipa
+          if-no-files-found: error
+
+      - name: Publish "latest" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest PlanetPort.ipa --target "$GITHUB_SHA" --prerelease --title "PlanetPort - ultima build" --notes "IPA non firmato. Installalo con Sideloadly (vedi README). Nessuna ROM inclusa."
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            ${{ env.SRC }}/build/xcodebuild.log
+            ${{ env.SRC }}/build/core/CMakeFiles/CMakeConfigureLog.yaml
+          if-no-files-found: ignore
