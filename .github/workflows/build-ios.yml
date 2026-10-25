@@ -43,9 +43,12 @@ jobs:
           restore-keys: ccache-ios-
 
       - name: Build PlanetPort.ipa
+        shell: bash
         env:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
-        run: bash "$SRC/scripts/ci_build.sh" "$GITHUB_WORKSPACE/PlanetPort.ipa"
+        run: |
+          set -o pipefail
+          bash "$SRC/scripts/ci_build.sh" "$GITHUB_WORKSPACE/PlanetPort.ipa" 2>&1 | tee ci.log
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
@@ -61,12 +64,20 @@ jobs:
           gh release delete latest --yes --cleanup-tag || true
           gh release create latest PlanetPort.ipa --target "$GITHUB_SHA" --prerelease --title "PlanetPort - ultima build" --notes "IPA non firmato. Installalo con Sideloadly (vedi README). Nessuna ROM inclusa."
 
-      - name: Upload logs on failure
+      # Failure logs are published as a public "build-log" pre-release so they can be read
+      # without signing in (workflow artifacts require a GitHub login to download).
+      - name: Publish logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs
-          path: |
-            ${{ env.SRC }}/build/xcodebuild.log
-            ${{ env.SRC }}/build/core/CMakeFiles/CMakeConfigureLog.yaml
-          if-no-files-found: ignore
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p logs
+          tail -n 3000 ci.log > logs/ci-tail.log 2>/dev/null || true
+          cp ci.log logs/ 2>/dev/null || true
+          cp "$SRC/build/xcodebuild.log" logs/ 2>/dev/null || true
+          cp "$SRC/build/core/CMakeFiles/CMakeConfigureLog.yaml" logs/ 2>/dev/null || true
+          gh release delete build-log --yes --cleanup-tag || true
+          if ls logs/* >/dev/null 2>&1; then
+            gh release create build-log logs/* --target "$GITHUB_SHA" --prerelease --title "Log ultima compilazione fallita" --notes "Log automatici della compilazione fallita." || true
+          fi
