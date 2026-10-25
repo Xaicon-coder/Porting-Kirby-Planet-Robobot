@@ -1,0 +1,5 @@
+framework module PlanetCore {
+  umbrella header "PlanetCore.h"
+  export *
+  module * { export * }
+}

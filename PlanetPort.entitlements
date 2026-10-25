@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!--
+  Intentionally empty so the app can be signed with a free Apple ID (sideloading).
+
+  With a paid Apple Developer account, enabling these two capabilities lets the emulator use
+  more RAM and address space (recommended for New 3DS titles on devices with 4 GB of RAM):
+
+    <key>com.apple.developer.kernel.increased-memory-limit</key>
+    <true/>
+    <key>com.apple.developer.kernel.extended-virtual-addressing</key>
+    <true/>
+-->
+<dict/>
+</plist>

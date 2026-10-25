@@ -1,0 +1,21 @@
+# Build products
+build/
+DerivedData/
+*.xcodeproj/
+xcuserdata/
+
+# Downloaded sources
+third_party/
+
+# Never commit games, keys or dumps
+*.3ds
+*.cci
+*.cxi
+*.cia
+*.app
+*.3dsx
+*.z3ds*
+aes_keys.txt
+keys.txt
+
+.DS_Store
